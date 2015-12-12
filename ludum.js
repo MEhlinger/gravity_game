@@ -54,7 +54,7 @@ var map = {
 var setup = function() {
 	pc.position.x = 10;
 	pc.position.y = 10;
-	testMeteor.position = {x:pc.position.x + canvas.width / 2, y: pc.position.y + 50};
+	testMeteor.position = {x:pc.position.x + canvas.width / 2, y: pc.position.y + 35};
 	pc.mass = 32;
 	pc.biomass = 1;
 	clock = 0
@@ -125,7 +125,11 @@ var setRenderCoordinates = function(object) {
 var update = function(modifier) {
 	// Handle key presses
 	// Handle gravity and speed logic
-	exertGravityOnMassiveObjects();
+	clock += 1
+	if (clock > 4) {
+		exertGravityOnMassiveObjects();
+		clock = 0;
+	}
 	moveObjects();
 	setAllObjectRenderCoordinates();
 };
