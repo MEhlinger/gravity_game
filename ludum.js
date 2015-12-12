@@ -15,28 +15,32 @@ const MAX_BIOMASS = 100;
 const MAX_SPEED = 50;
 const MAX_MASS = 100
 
+var clock = 0;
+
 var keysPressed = {};
 addEventListener("keydown", function(e) {keysPressed[e.keyCode] = true;}, false);
 addEventListener("keyup", function(e) {delete keysPressed[e.keyCode];}, false);
 
 var pc = {
 	position : {x: 0, y: 0},
-	speed : {x: 10, y: 5},
+	speed : {x: 0, y: 0},
 	mass : 10,
 	biomass : 1,
-	image : "/assets/images/pc.png"
+	image : "assets/images/pc.png"
 };
 
 var testMeteor = {
 	position : {x: 0, y: 0},
 	speed : {x: -5, y: 0},
 	mass : 5,
+	renderX: 0,
+	renderY:0,
 	id : 0
 }
 
 var pcReady = false;
 var pcImage = new Image();
-pcImage.src = "assets/images/pc.png";
+pcImage.src = pc.image;
 pcImage.onload = function() {
 	pcReady = true;
 };
@@ -53,6 +57,7 @@ var setup = function() {
 	testMeteor.position = {x:pc.position.x + canvas.width / 2, y: pc.position.y + 50};
 	pc.mass = 32;
 	pc.biomass = 1;
+	clock = 0
 };
 
 var isOnScreen = function(objectInSpaceX, objectInSpaceY) {
@@ -99,10 +104,30 @@ var exertGravityOnMassiveObjects = function() {
 	}
 }
 
+var moveObjects = function() {
+	for (i = 0; i < map.massiveObjects.length; i++) {
+		map.massiveObjects[i].position.x += map.massiveObjects[i].speed.x;
+		map.massiveObjects[i].position.y += map.massiveObjects[i].speed.y;
+	}
+}
+
+var setAllObjectRenderCoordinates = function() {
+	for (i = 1; i < map.massiveObjects.length; i++){
+		setRenderCoordinates(map.massiveObjects[i]);
+	}
+}
+
+var setRenderCoordinates = function(object) {
+	object.renderX = canvas.width / 2 + (object.position.x - pc.position.x);
+	object.renderY = canvas.height / 2 + (object.position.y - pc.position.y);
+}
+
 var update = function(modifier) {
 	// Handle key presses
 	// Handle gravity and speed logic
 	exertGravityOnMassiveObjects();
+	moveObjects();
+	setAllObjectRenderCoordinates();
 };
 
 var clearAndRedrawBackground = function() {
@@ -130,7 +155,7 @@ var render = function() {
 			pc.mass, pc.mass);
 	}
 
-	drawCircle(testMeteor.position.x, testMeteor.position.y, testMeteor.mass / 2, "#FFFFFF");
+	drawCircle(testMeteor.renderX, testMeteor.renderY, testMeteor.mass / 2, "#FFFFFF");
 };
 
 var main = function() {
