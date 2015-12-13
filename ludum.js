@@ -24,7 +24,7 @@ addEventListener("keyup", function(e) {delete keysPressed[e.keyCode];}, false);
 var pc = {
 	position : {x: 0, y: 0},
 	speed : {x: 0, y: 0},
-	mass : 10,
+	mass : 0,
 	biomass : 1,
 	image : "assets/images/pc.png"
 };
@@ -54,9 +54,11 @@ var map = {
 var setup = function() {
 	pc.position.x = 10;
 	pc.position.y = 10;
-	testMeteor.position = {x:pc.position.x + canvas.width / 2, y: pc.position.y + 35};
-	pc.mass = 32;
+	pc.mass = 25;
 	pc.biomass = 1;
+
+	testMeteor.position = {x:pc.position.x + canvas.width / 2, y: pc.position.y + 35};
+
 	clock = 0
 };
 
@@ -72,37 +74,62 @@ var isOnScreen = function(objectInSpaceX, objectInSpaceY) {
 	return false;
 };
 
+var isCollision = function(obj1, obj2) {
+	if (obj1.position.x + obj1.mass >= obj2.position.x
+		&& obj1.position.x <= obj2.position.x + obj2.mass
+		&& obj1.position.y + obj1.mass >= obj2.position.y
+		&& obj1.position.y <= obj2.position.y + obj2.mass) {
+		return true;
+	}
+	return false;
+};
+
 var orderObjectsByMass = function(obj1, obj2) {
-	// larger object is first
+	// larger object is first in return
 	if (obj1.mass > obj2.mass) {
 		return [obj1, obj2];
 	}
 	return [obj2, obj1];
-}
+};
 
 var gravityRadius = function(object) {
 	return object.mass * 3;
-}
+};
 
-var exertGravityOnMassiveObjects = function() {
+var checkForAndApplyGravityAndCollisions = function() {
 	for (i = 0; i < map.massiveObjects.length; i++){
 		for (j = i+1; j < map.massiveObjects.length; j++) {
-			orderedObjects = orderObjectsByMass(map.massiveObjects[i], map.massiveObjects[j]);
-			xDiff = orderedObjects[0].position.x - orderedObjects[1].position.x;
-			yDiff = orderedObjects[0].position.y - orderedObjects[1].position.y;
-			if (xDiff <= gravityRadius(orderedObjects[0]) && xDiff > 0) {
-				orderedObjects[1].speed.x += orderedObjects[0].mass / orderedObjects[1].mass;
-			} else if (xDiff <= gravityRadius(orderedObjects[0]) && xDiff < 0) {
-				orderedObjects[1].speed.x -= orderedObjects[0].mass / orderedObjects[1].mass;
-			}
-			if (yDiff <= gravityRadius(orderedObjects[0]) && yDiff > 0) {
-				orderedObjects[1].speed.y += orderedObjects[0].mass / orderedObjects[1].mass;
-			} else if (yDiff <= gravityRadius(orderedObjects[0]) && yDiff < 0) {
-				orderedObjects[1].speed.y -= orderedObjects[0].mass / orderedObjects[1].mass;
+			if (!isCollision(map.massiveObjects[i], map.massiveObjects[j])) {
+				gravitationalInteraction(map.massiveObjects[i], map.massiveObjects[j]);
+			} else {
+				// resolveCollision(map.massiveObjects[i], map.massiveObjects[j]);
+				console.log("collision")
 			}
 		}
 	}
-}
+};
+
+var gravitationalInteraction = function(obj1, obj2) {
+	orderedObjects = orderObjectsByMass(obj1, obj2);
+	bigObj = orderedObjects[0];
+	smallObj = orderedObjects[1];
+
+	xDiff = bigObj.position.x - smallObj.position.x;
+	yDiff = bigObj.position.y - smallObj.position.y;
+
+	if (xDiff <= gravityRadius(bigObj) && yDiff <= gravityRadius(bigObj)) {
+		if (xDiff > 0) {
+			smallObj.speed.x += bigObj.mass / smallObj.mass;
+		} else if (xDiff < 0) {
+			smallObj.speed.x -= bigObj.mass / smallObj.mass;
+		}
+		if (yDiff > 0) {
+			smallObj.speed.y += bigObj.mass / smallObj.mass;
+		} else if (yDiff < 0) {
+			smallObj.speed.y -= bigObj.mass / smallObj.mass;
+		}
+	}
+};
 
 var moveObjects = function() {
 	for (i = 0; i < map.massiveObjects.length; i++) {
@@ -122,16 +149,22 @@ var setRenderCoordinates = function(object) {
 	object.renderY = canvas.height / 2 + (object.position.y - pc.position.y);
 }
 
+var checkCollisions = function() {
+
+}
+
 var update = function(modifier) {
 	// Handle key presses
 	// Handle gravity and speed logic
 	clock += 1
 	if (clock > 4) {
-		exertGravityOnMassiveObjects();
+		checkForAndApplyGravityAndCollisions();
 		clock = 0;
 	}
 	moveObjects();
+	checkCollisions();
 	setAllObjectRenderCoordinates();
+	console.log(testMeteor.speed);
 };
 
 var clearAndRedrawBackground = function() {
