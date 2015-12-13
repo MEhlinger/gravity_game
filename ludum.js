@@ -12,8 +12,10 @@ document.body.appendChild(canvas);
 
 const bgColor = BLACK = "#000000";
 const MAX_BIOMASS = 100;
-const MAX_SPEED = 50;
+const MAX_SPEED = 10;
 const MAX_MASS = 100
+const TICS_PER_ACCELERATION = 10; // Number of tics between each calculation and application of gravity
+const GRAVITATIONAL_CONSTANT = 100; // Mass / Grav-constant = delta speed
 
 var clock = 0;
 
@@ -31,8 +33,8 @@ var pc = {
 
 var testMeteor = {
 	position : {x: 0, y: 0},
-	speed : {x: -5, y: 0},
-	mass : 5,
+	speed : {x: -2, y: 0},
+	mass : 10,
 	renderX: 0,
 	renderY:0,
 	id : 0
@@ -54,7 +56,7 @@ var map = {
 var setup = function() {
 	pc.position.x = 10;
 	pc.position.y = 10;
-	pc.mass = 25;
+	pc.mass = 99;
 	pc.biomass = 1;
 
 	testMeteor.position = {x:pc.position.x + canvas.width / 2, y: pc.position.y + 35};
@@ -93,19 +95,25 @@ var orderObjectsByMass = function(obj1, obj2) {
 };
 
 var gravityRadius = function(object) {
-	return object.mass * 3;
+	return object.mass * 2;
 };
 
 var checkForAndApplyGravityAndCollisions = function() {
+	clock += 1;
 	for (i = 0; i < map.massiveObjects.length; i++){
 		for (j = i+1; j < map.massiveObjects.length; j++) {
-			if (!isCollision(map.massiveObjects[i], map.massiveObjects[j])) {
-				gravitationalInteraction(map.massiveObjects[i], map.massiveObjects[j]);
+			if (!isCollision(map.massiveObjects[i], map.massiveObjects[j]))  {
+				if (clock > TICS_PER_ACCELERATION) {
+					gravitationalInteraction(map.massiveObjects[i], map.massiveObjects[j]);
+				}
 			} else {
 				// resolveCollision(map.massiveObjects[i], map.massiveObjects[j]);
-				console.log("collision")
+				console.log("*******************collision************************");
 			}
 		}
+	}
+	if (clock > TICS_PER_ACCELERATION) {
+		clock = 0;
 	}
 };
 
@@ -119,20 +127,27 @@ var gravitationalInteraction = function(obj1, obj2) {
 
 	if (xDiff <= gravityRadius(bigObj) && yDiff <= gravityRadius(bigObj)) {
 		if (xDiff > 0) {
-			smallObj.speed.x += bigObj.mass / smallObj.mass;
+			smallObj.speed.x += bigObj.mass / GRAVITATIONAL_CONSTANT;
 		} else if (xDiff < 0) {
-			smallObj.speed.x -= bigObj.mass / smallObj.mass;
+			smallObj.speed.x -= bigObj.mass / GRAVITATIONAL_CONSTANT;;
 		}
 		if (yDiff > 0) {
-			smallObj.speed.y += bigObj.mass / smallObj.mass;
+			smallObj.speed.y += bigObj.mass / GRAVITATIONAL_CONSTANT;;
 		} else if (yDiff < 0) {
-			smallObj.speed.y -= bigObj.mass / smallObj.mass;
+			smallObj.speed.y -= bigObj.mass / GRAVITATIONAL_CONSTANT;;
 		}
 	}
-};
+}
 
 var moveObjects = function() {
-	for (i = 0; i < map.massiveObjects.length; i++) {
+	for (i = 0; i < map.massiveObjects.length; i++) { 
+		if (map.massiveObjects[i].speed.x > MAX_SPEED) {
+			map.massiveObjects[i].speed.x = MAX_SPEED;
+		}
+		if (map.massiveObjects[i].speed.y > MAX_SPEED) {
+			map.massiveObjects[i].speed.y = MAX_SPEED;
+		}
+
 		map.massiveObjects[i].position.x += map.massiveObjects[i].speed.x;
 		map.massiveObjects[i].position.y += map.massiveObjects[i].speed.y;
 	}
@@ -149,22 +164,12 @@ var setRenderCoordinates = function(object) {
 	object.renderY = canvas.height / 2 + (object.position.y - pc.position.y);
 }
 
-var checkCollisions = function() {
-
-}
-
 var update = function(modifier) {
 	// Handle key presses
 	// Handle gravity and speed logic
-	clock += 1
-	if (clock > 4) {
-		checkForAndApplyGravityAndCollisions();
-		clock = 0;
-	}
+	checkForAndApplyGravityAndCollisions();
 	moveObjects();
-	checkCollisions();
 	setAllObjectRenderCoordinates();
-	console.log(testMeteor.speed);
 };
 
 var clearAndRedrawBackground = function() {
