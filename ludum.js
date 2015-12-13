@@ -12,10 +12,10 @@ document.body.appendChild(canvas);
 
 const bgColor = BLACK = "#000000";
 const MAX_BIOMASS = 100;
-const MAX_SPEED = 10;
-const MAX_MASS = 100
-const TICS_PER_ACCELERATION = 10; // Number of tics between each calculation and application of gravity
-const GRAVITATIONAL_CONSTANT = 100; // Mass / Grav-constant = delta speed
+const MAX_SPEED = 5;
+const MAX_MASS = 100;
+const TICS_PER_ACCELERATION = 8; // Number of tics between each calculation and application of gravity
+const GRAVITATIONAL_CONSTANT = 39; // Mass / Grav-constant = delta speed
 
 var clock = 0;
 
@@ -33,7 +33,7 @@ var pc = {
 
 var testMeteor = {
 	position : {x: 0, y: 0},
-	speed : {x: -2, y: 0},
+	speed : {x: -3.5, y: 2.5},
 	mass : 10,
 	renderX: 0,
 	renderY:0,
@@ -56,10 +56,10 @@ var map = {
 var setup = function() {
 	pc.position.x = 10;
 	pc.position.y = 10;
-	pc.mass = 99;
+	pc.mass = 49;
 	pc.biomass = 1;
 
-	testMeteor.position = {x:pc.position.x + canvas.width / 2, y: pc.position.y + 35};
+	testMeteor.position = {x:pc.position.x + 220, y: pc.position.y - canvas.height/2};
 
 	clock = 0
 };
@@ -95,7 +95,7 @@ var orderObjectsByMass = function(obj1, obj2) {
 };
 
 var gravityRadius = function(object) {
-	return object.mass * 2;
+	return object.mass * 3;
 };
 
 var checkForAndApplyGravityAndCollisions = function() {
