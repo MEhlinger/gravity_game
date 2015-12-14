@@ -25,7 +25,7 @@ addEventListener("keyup", function(e) {delete keysPressed[e.keyCode];}, false);
 
 var pc = {
 	id : 0,
-	type: "planet",
+	type: "solid",
 	position : {x: 0, y: 0},
 	speed : {x: 0, y: 0},
 	mass : 0,
@@ -37,7 +37,7 @@ var pc = {
 
 var testMeteor = {
 	id : 1,
-	type: "meteor",
+	type: "solid",
 	position : {x: 0, y: 0},
 	speed : {x: -3.5, y: 2.5},
 	mass : 0,
@@ -137,11 +137,13 @@ var checkForAndApplyGravityAndCollisions = function() {
 	clock += 1;
 	for (i = 0; i < map.massiveObjects.length; i++){
 		for (j = i+1; j < map.massiveObjects.length; j++) {
-			if (isCollision(map.massiveObjects[i], map.massiveObjects[j]))  {
-				resolveCollision(map.massiveObjects[i], map.massiveObjects[j]);
-			} else {
-				if (clock > TICS_PER_ACCELERATION) {
-					gravitationalInteraction(map.massiveObjects[i], map.massiveObjects[j]);
+			if (map.massiveObjects[i]) {
+				if (isCollision(map.massiveObjects[i], map.massiveObjects[j]))  {
+					resolveCollision(map.massiveObjects[i], map.massiveObjects[j]);
+				} else {
+					if (clock > TICS_PER_ACCELERATION) {
+						gravitationalInteraction(map.massiveObjects[i], map.massiveObjects[j]);
+					}
 				}
 			}
 		}
@@ -156,20 +158,22 @@ var resolveCollision = function(obj1, obj2) {
 	bigObj = orderedObjects[0];
 	smallObj = orderedObjects[1];
 
-	if (smallObj.type !== "boost") {
+	if (smallObj.type === "boost") {
+		bigObj.health += smallObj.mass;
+		if (bigObj.health > bigObj.maxMass) {
+			bigObj.health = bigObj.maxMass;
+		}
+		// destroyObject(smallObj);
+		
+	} else if (smallObj.type === "solid" && bigObj.type === "solid") {
 		bigObj.mass -= smallObj.mass;
 		bigObj.health -= smallObj.mass;
 		destroyObject(smallObj);
 		if (bigObj.health <= bigObj.minMass) {
 			// destroyObject(bigObj);
 		}
-	} else {
-		bigObj.health += smallObj.mass;
-		if (bigObj.health > bigObj.maxMass) {
-			bigObj.health = bigObj.maxMass;
-		}
-		// destroyObject(smallObj);
 	}
+
 };
 
 var destroyObject = function(obj) {
