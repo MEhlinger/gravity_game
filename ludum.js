@@ -28,7 +28,6 @@ var pc = {
 	speed : {x: 0, y: 0},
 	mass : 0,
 	biomass : 1,
-	render : {x:canvas.width/2, y:canvas.height/2},
 	image : "assets/images/pc.png"
 };
 
@@ -59,9 +58,9 @@ var setup = function() {
 	pc.mass = 49;
 	pc.biomass = 1;
 
-	testMeteor.position = {x:pc.position.x + 220, y: pc.position.y +10 - canvas.height/2};
+	testMeteor.position = {x:pc.position.x + 220, y: pc.position.y - canvas.height/2 + 20};
 
-	clock = 0
+	clock = 0;
 };
 
 var isOnScreen = function(object) {
@@ -158,9 +157,13 @@ var moveObjects = function() {
 
 		if (obj.speed.x > MAX_SPEED) {
 			obj.speed.x = MAX_SPEED;
+		} else if (obj.speed.x < MAX_SPEED * -1) {
+			obj.speed.x = MAX_SPEED * -1;
 		}
 		if (obj.speed.y > MAX_SPEED) {
 			obj.speed.y = MAX_SPEED;
+		} else if (obj.speed.y < MAX_SPEED * -1) {
+			obj.speed.y = MAX_SPEED * -1;
 		}
 
 		obj.position.x += obj.speed.x;
@@ -175,17 +178,13 @@ var adjustCoordinatesForWrap = function(x, y) {
 	newY = y;
 	if (x >= map.width) {
 		newX = x - map.width;
-		console.log('off the right');
 	} else if (x <= 0) {
 		newX = map.width - x;
-		console.log('off left');
 	}
 	if (y >= map.height) {
-		console.log('off bottom');
 		newY = y - map.height;
 	} else if (y <= 0) {
 		newY = map.height + y;
-		console.log('off top');
 	}
 	return {x: newX, y: newY};
 
@@ -226,6 +225,7 @@ var update = function(modifier) {
 	checkForAndApplyGravityAndCollisions();
 	moveObjects();
 	setAllObjectRenderCoordinates();
+	// console.log(testMeteor.speed);
 };
 
 var clearAndRedrawBackground = function() {
