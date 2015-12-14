@@ -64,12 +64,24 @@ var setup = function() {
 	clock = 0
 };
 
-var isOnScreen = function(objectInSpaceX, objectInSpaceY) {
+var isOnScreen = function(object) {
 	if (
-		(objectInSpaceX <= pc.x + canvas.width / 2)
-		&& (objectInSpaceX >= pc.x - canvas.width / 2)
-		&& (objectInSpaceY <= pc.y + canvas.height / 2)
-		&& (objectInSpaceY >= pc.y - canvas.height / 2)
+		(object.position.x <= pc.x + canvas.width / 2)
+		&& (object.position.x >= pc.x - canvas.width / 2)
+		&& (object.position.y <= pc.y + canvas.height / 2)
+		&& (object.position.y >= pc.y - canvas.height / 2)
+		) {
+		return true;	
+	}
+	return false;
+};
+
+var isOnMap = function(object) {
+	if (
+		(object.position.x <= map.width)
+		&& (object.position.x >= 0)
+		&& (object.position.y <= map.height)
+		&& (object.position.y >= 0)
 		) {
 		return true;	
 	}
@@ -77,11 +89,12 @@ var isOnScreen = function(objectInSpaceX, objectInSpaceY) {
 };
 
 var isCollision = function(obj1, obj2) {
-	if (obj1.position.x + obj1.mass >= obj2.position.x
-		&& obj1.position.x <= obj2.position.x + obj2.mass
-		&& obj1.position.y + obj1.mass >= obj2.position.y
-		&& obj1.position.y <= obj2.position.y + obj2.mass) {
-		return true;
+	//
+	if (obj1.position.x + obj1.mass *.8 >= obj2.position.x
+		&& obj1.position.x <= obj2.position.x + obj2.mass *.8
+		&& obj1.position.y + obj1.mass *.8 >= obj2.position.y
+		&& obj1.position.y <= obj2.position.y + obj2.mass *.8) {
+		return true; 
 	}
 	return false;
 };
@@ -166,6 +179,18 @@ var setRenderCoordinates = function(object) {
 
 var update = function(modifier) {
 	// Handle key presses
+	if (38 in keysPressed) {
+		//up
+		if (pc.mass < MAX_MASS - 1) {
+			pc.mass += 2;
+		}
+	}
+	if (40 in keysPressed) {
+		//down
+		if (pc.mass > 6) {
+			pc.mass -= 2;
+		}
+	}
 	// Handle gravity and speed logic
 	checkForAndApplyGravityAndCollisions();
 	moveObjects();
