@@ -11,11 +11,12 @@ canvas.height = 580;
 document.body.appendChild(canvas);
 
 const bgColor = BLACK = "#000000";
-const MAX_BIOMASS = 100;
+
 const MAX_SPEED = 5;
-const MAX_MASS = 100;
+const MAX_MASS = 100; // for Player
 const TICS_PER_ACCELERATION = 8; // Number of tics between each calculation and application of gravity
 const GRAVITATIONAL_CONSTANT = 39; // Mass / Grav-constant = delta speed
+
 
 var clock = 0;
 
@@ -24,17 +25,22 @@ addEventListener("keydown", function(e) {keysPressed[e.keyCode] = true;}, false)
 addEventListener("keyup", function(e) {delete keysPressed[e.keyCode];}, false);
 
 var pc = {
+	id : 0,
 	position : {x: 0, y: 0},
 	speed : {x: 0, y: 0},
 	mass : 0,
-	biomass : 1,
+	health : MAX_MASS,
+	minMass : 15,
 	image : "assets/images/pc.png"
 };
 
 var testMeteor = {
+	id : 1,
 	position : {x: 0, y: 0},
 	speed : {x: -3.5, y: 2.5},
 	mass : 10,
+	health : this.mass,
+	minMass : 5,
 	render : {x :0, y:0},
 	id : 0
 }
@@ -55,10 +61,12 @@ var map = {
 var setup = function() {
 	pc.position.x = 250;
 	pc.position.y = 250;
-	pc.mass = 49;
-	pc.biomass = 1;
+	pc.mass = 32;
+	pc.health = MAX_MASS;
 
 	testMeteor.position = {x:pc.position.x + 220, y: pc.position.y - canvas.height/2 + 20};
+	testMeteor.mass = 10;
+	testMeteor.health = testMeteor.mass;
 
 	clock = 0;
 };
@@ -119,13 +127,38 @@ var checkForAndApplyGravityAndCollisions = function() {
 					gravitationalInteraction(map.massiveObjects[i], map.massiveObjects[j]);
 				}
 			} else {
-				// resolveCollision(map.massiveObjects[i], map.massiveObjects[j]);
+				resolveCollision(map.massiveObjects[i], map.massiveObjects[j]);
 				console.log("*******************collision************************");
 			}
 		}
 	}
 	if (clock > TICS_PER_ACCELERATION) {
 		clock = 0;
+	}
+};
+
+var resolveCollision = function(obj1, obj2) {
+	orderedObjects = orderObjectsByMass(obj1, obj2);
+	bigObj = orderedObjects[0];
+	smallObj = orderedObjects[1];
+
+	bigObj.mass -= smallObj.mass;
+	bigObj.health -= smallObj.mass;
+	destroyObject(smallObj);
+	if (bigObj.health <= bigObj.minMass) {
+		destroyObject(bigObj);
+	}
+};
+
+var destroyObject = function(obj) {
+	if (obj.id === 0) {
+		//End Game
+		//resolveDeadPlayer();
+	}
+	for (i = 1; i < map.massiveObjects.length; i++) {
+		if (map.massiveObjects[i].id === obj.id) {
+			//Remove it from massiveObjects
+		}
 	}
 };
 
@@ -206,13 +239,13 @@ var setRenderCoordinates = function(object) {
 var checkForAndApplyInput = function() {
 	if (38 in keysPressed) {
 		//up
-		if (pc.mass < MAX_MASS - 1) {
+		if (pc.mass < pc.health - 2) {
 			pc.mass += 2;
 		}
 	}
 	if (40 in keysPressed) {
 		//down
-		if (pc.mass > 6) {
+		if (pc.mass > pc.minMass) {
 			pc.mass -= 2;
 		}
 	}
