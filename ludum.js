@@ -19,7 +19,7 @@ const GRAVITATIONAL_CONSTANT = 39; // Mass / Grav-constant = delta speed
 
 var clock = 0;
 
-var keysPressed = {};
+const keysPressed = {};
 addEventListener("keydown", function(e) {keysPressed[e.keyCode] = true;}, false);
 addEventListener("keyup", function(e) {delete keysPressed[e.keyCode];}, false);
 
@@ -28,6 +28,7 @@ var pc = {
 	speed : {x: 0, y: 0},
 	mass : 0,
 	biomass : 1,
+	render : {x:canvas.width/2, y:canvas.height/2},
 	image : "assets/images/pc.png"
 };
 
@@ -35,8 +36,7 @@ var testMeteor = {
 	position : {x: 0, y: 0},
 	speed : {x: -3.5, y: 2.5},
 	mass : 10,
-	renderX: 0,
-	renderY:0,
+	render : {x :0, y:0},
 	id : 0
 }
 
@@ -54,22 +54,22 @@ var map = {
 };
 
 var setup = function() {
-	pc.position.x = 10;
-	pc.position.y = 10;
+	pc.position.x = 250;
+	pc.position.y = 250;
 	pc.mass = 49;
 	pc.biomass = 1;
 
-	testMeteor.position = {x:pc.position.x + 220, y: pc.position.y - canvas.height/2};
+	testMeteor.position = {x:pc.position.x + 220, y: pc.position.y +10 - canvas.height/2};
 
 	clock = 0
 };
 
 var isOnScreen = function(object) {
 	if (
-		(object.position.x <= pc.x + canvas.width / 2)
-		&& (object.position.x >= pc.x - canvas.width / 2)
-		&& (object.position.y <= pc.y + canvas.height / 2)
-		&& (object.position.y >= pc.y - canvas.height / 2)
+		(object.position.x <= adjustCoordinatesForWrap(pc.position.x + canvas.width / 2).x)
+		&& (object.position.x >= adjustCoordinatesForWrap(pc.position.x - canvas.width / 2).x)
+		&& (object.position.y <= adjustCoordinatesForWrap(pc.position.y + canvas.height / 2).y)
+		&& (object.position.y >= adjustCoordinatesForWrap(pc.position.y - canvas.height / 2).y)
 		) {
 		return true;	
 	}
@@ -154,17 +154,42 @@ var gravitationalInteraction = function(obj1, obj2) {
 
 var moveObjects = function() {
 	for (i = 0; i < map.massiveObjects.length; i++) { 
-		if (map.massiveObjects[i].speed.x > MAX_SPEED) {
-			map.massiveObjects[i].speed.x = MAX_SPEED;
+		var obj = map.massiveObjects[i];
+
+		if (obj.speed.x > MAX_SPEED) {
+			obj.speed.x = MAX_SPEED;
 		}
-		if (map.massiveObjects[i].speed.y > MAX_SPEED) {
-			map.massiveObjects[i].speed.y = MAX_SPEED;
+		if (obj.speed.y > MAX_SPEED) {
+			obj.speed.y = MAX_SPEED;
 		}
 
-		map.massiveObjects[i].position.x += map.massiveObjects[i].speed.x;
-		map.massiveObjects[i].position.y += map.massiveObjects[i].speed.y;
+		obj.position.x += obj.speed.x;
+		obj.position.y += obj.speed.y;
+
+		obj.position = adjustCoordinatesForWrap(obj.position.x, obj.position.y);
 	}
-}
+};
+
+var adjustCoordinatesForWrap = function(x, y) {
+	newX = x;
+	newY = y;
+	if (x >= map.width) {
+		newX = x - map.width;
+		console.log('off the right');
+	} else if (x <= 0) {
+		newX = map.width - x;
+		console.log('off left');
+	}
+	if (y >= map.height) {
+		console.log('off bottom');
+		newY = y - map.height;
+	} else if (y <= 0) {
+		newY = map.height + y;
+		console.log('off top');
+	}
+	return {x: newX, y: newY};
+
+};
 
 var setAllObjectRenderCoordinates = function() {
 	for (i = 1; i < map.massiveObjects.length; i++){
@@ -173,12 +198,13 @@ var setAllObjectRenderCoordinates = function() {
 }
 
 var setRenderCoordinates = function(object) {
-	object.renderX = canvas.width / 2 + (object.position.x - pc.position.x);
-	object.renderY = canvas.height / 2 + (object.position.y - pc.position.y);
-}
+	object.render.x = canvas.width / 2 + (object.position.x - pc.position.x);
+	object.render.y = canvas.height / 2 + (object.position.y - pc.position.y);
 
-var update = function(modifier) {
-	// Handle key presses
+	object.render = adjustCoordinatesForWrap(object.render.x, object.render.y);
+};
+
+var checkForAndApplyInput = function() {
 	if (38 in keysPressed) {
 		//up
 		if (pc.mass < MAX_MASS - 1) {
@@ -191,6 +217,11 @@ var update = function(modifier) {
 			pc.mass -= 2;
 		}
 	}
+}
+
+var update = function(modifier) {
+	// Handle key presses
+	checkForAndApplyInput();
 	// Handle gravity and speed logic
 	checkForAndApplyGravityAndCollisions();
 	moveObjects();
@@ -222,7 +253,7 @@ var render = function() {
 			pc.mass, pc.mass);
 	}
 
-	drawCircle(testMeteor.renderX, testMeteor.renderY, testMeteor.mass / 2, "#FFFFFF");
+	drawCircle(testMeteor.render.x, testMeteor.render.y, testMeteor.mass / 2, "#FFFFFF");
 };
 
 var main = function() {
