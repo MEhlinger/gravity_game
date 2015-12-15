@@ -23,7 +23,45 @@ const keysPressed = {};
 addEventListener("keydown", function(e) {keysPressed[e.keyCode] = true;}, false);
 addEventListener("keyup", function(e) {delete keysPressed[e.keyCode];}, false);
 
+var images = [];
+
+crispyPlanet = new Image();
+crispyPlanet.src = "assets/images/crispy.png"
+images.push(crispyPlanet);
+
+pinkPlanet = new Image();
+pinkPlanet.src = "assets/images/pink_planet.png"
+images.push(pinkPlanet);
+
+costnerPlanet = new Image();
+costnerPlanet.src = "assets/images/costner.png"
+images.push(costnerPlanet);
+
+scalesPlanet = new Image();
+scalesPlanet.src = "assets/images/scales.png"
+images.push(scalesPlanet);
+
+shadowPlanet = new Image();
+shadowPlanet.src = "assets/images/shadow.png"
+images.push(shadowPlanet);
+
+eightiesPlanet = new Image();
+eightiesPlanet.src = "assets/images/eighties.png"
+images.push(eightiesPlanet);
+
+meteor = new Image();
+meteor.src = "assets/images/meteor.png"
+images.push(meteor);
+
+var numLoadedImages = 0;
+for (i = 0; i < images.length; i++) {
+	images[i].onload = function() {
+		numLoadedImages++;
+	};
+};
+
 var pc = {
+	name : "Player",
 	id : 0,
 	type: "solid",
 	position : {x: 0, y: 0},
@@ -32,47 +70,55 @@ var pc = {
 	maxMass : 100,
 	health : this.maxMass,
 	minMass : 15,
-	image : "assets/images/pc.png"
+	img : images[0]
 };
 
 var testMeteor = {
-	id : 1,
+	name : "small meteor",
 	type: "solid",
 	position : {x: 0, y: 0},
 	speed : {x: -3.5, y: 2.5},
 	mass : 0,
 	maxMass : 25,
 	health : 0,
-	minMass : 5,
-	render : {x :0, y:0}
+	minMass : 10,
+	render : {x :0, y:0},
+	img : images[6]
+}
+
+var testMeteor2 = {
+	name : "larger meteor",
+	type: "solid",
+	position : {x: 0, y: 0},
+	speed : {x: 1, y: 1},
+	mass : 0,
+	maxMass : 50,
+	health : 0,
+	minMass : 10,
+	render : {x :0, y:0},
+	img : images[6]
 }
 
 var testBoost = {
-	id : 2,
+	name : "boost",
 	type: "boost",
 	position : {x: 0, y: 0},
 	speed : {x: 2, y: -2},
 	mass : 0,
-	health: 0,
-	render : {x :0, y:0}
+	render : {x :0, y:0},
+	img : images[1]
 }
 
-var pcReady = false;
-var pcImage = new Image();
-pcImage.src = pc.image;
-pcImage.onload = function() {
-	pcReady = true;
-};
 
 var map = {
-	width : 1920,
-	height : 1060,
-	massiveObjects : [pc, testMeteor, testBoost]
+	width : 5000,
+	height : 5000,
+	massiveObjects : [pc, testMeteor, testBoost, testMeteor2]
 };
 
 var setup = function() {
-	pc.position.x = 250;
-	pc.position.y = 250;
+	pc.position.x = 350;
+	pc.position.y = 350;
 	pc.mass = 32;
 	pc.health = pc.maxMass;
 
@@ -80,9 +126,12 @@ var setup = function() {
 	testMeteor.mass = 10;
 	testMeteor.health = testMeteor.mass;
 
+	testMeteor2.position = {x:pc.position.x - 220, y: pc.position.y - canvas.height/2 + 20};
+	testMeteor2.mass = 20;
+	testMeteor.health2 = testMeteor.mass;
+
 	testBoost.position = {x:pc.position.x - 220, y: pc.position.y + canvas.height/2 - 15};
-	testBoost.mass = 20
-	testBoost.health = testBoost.mass;
+	testBoost.mass = 21
 
 	clock = 0;
 };
@@ -153,39 +202,62 @@ var checkForAndApplyGravityAndCollisions = function() {
 	}
 };
 
+var boostCollision = function(boosted, booster) {
+		boosted.health += booster.mass;
+		if (boosted.health > boosted.maxMass) {
+			boosted.health = boosted.maxMass;
+		}
+		destroyObject(booster);
+};
+
+var solidObjectCollision = function(smallObj, bigObj) {
+	bigObj.mass -= smallObj.mass;
+	bigObj.health -= smallObj.mass;
+
+	if (smallObj.speed.x > 0) {
+		bigObj.speed.x += 1;
+	} else if (smallObj.speed.x < 0) {
+		bigObj.speed.x -= 1;
+	}
+	if (smallObj.speed.y > 0) {
+		bigObj.speed.y += 1;
+	} else if (smallObj.speed.y < 0) {
+		bigObj.speed.y -= 1;
+	} 
+
+	destroyObject(smallObj);
+	if (bigObj.health <= bigObj.minMass) {
+		destroyObject(bigObj);
+	}
+}
+
 var resolveCollision = function(obj1, obj2) {
 	orderedObjects = orderObjectsByMass(obj1, obj2);
 	bigObj = orderedObjects[0];
 	smallObj = orderedObjects[1];
 
 	if (smallObj.type === "boost") {
-		bigObj.health += smallObj.mass;
-		if (bigObj.health > bigObj.maxMass) {
-			bigObj.health = bigObj.maxMass;
-		}
-		// destroyObject(smallObj);
-		
+		boostCollision(bigObj, smallObj);
 	} else if (smallObj.type === "solid" && bigObj.type === "solid") {
-		bigObj.mass -= smallObj.mass;
-		bigObj.health -= smallObj.mass;
-		destroyObject(smallObj);
-		if (bigObj.health <= bigObj.minMass) {
-			// destroyObject(bigObj);
-		}
+		solidObjectCollision(smallObj, bigObj);
 	}
-
 };
 
 var destroyObject = function(obj) {
 	if (obj.id === 0) {
 		//End Game
 		//resolveDeadPlayer();
+		map.massiveObjects.splice(0,1);
+		return;
 	}
 	for (i = 1; i < map.massiveObjects.length; i++) {
-		if (map.massiveObjects[i].id === obj.id) {
-			//Remove it from massiveObjects
+		if (map.massiveObjects[i] === obj) {
+			map.massiveObjects.splice(i,1);
+			return;
 		}
 	}
+
+
 };
 
 var gravitationalInteraction = function(obj1, obj2) {
@@ -233,20 +305,19 @@ var moveObjects = function() {
 };
 
 var adjustCoordinatesForWrap = function(x, y) {
-	newX = x;
-	newY = y;
-	if (x >= map.width) {
-		newX = x - map.width;
-	} else if (x <= 0) {
-		newX = map.width - x;
-	}
-	if (y >= map.height) {
-		newY = y - map.height;
-	} else if (y <= 0) {
-		newY = map.height + y;
-	}
+	newX = adjustSingleAxisValueForWrap(x, map.width);
+	newY = adjustSingleAxisValueForWrap(y, map.height);
 	return {x: newX, y: newY};
+};
 
+var adjustSingleAxisValueForWrap = function(z, maxValueOfAxis) {
+	newZ = z;
+	if (z > maxValueOfAxis) {
+		newZ = z - maxValueOfAxis;
+	} else if (z < 0) {
+		newZ = maxValueOfAxis - z;
+	}
+	return z;
 };
 
 var setAllObjectRenderCoordinates = function() {
@@ -302,17 +373,22 @@ var drawCircle = function(centerX, centerY, radius, color) {
 	context.stroke();
 };
 
-var render = function() {
-	clearAndRedrawBackground();
-	if (pcReady) {
-		context.drawImage(pcImage,
-			canvas.width / 2 - pc.mass / 2, 
-			canvas.height / 2 - pc.mass / 2,
-			pc.mass, pc.mass);
+var drawMassiveObjects = function() {
+	pc.render = {x : canvas.width / 2 - pc.mass / 2, y : canvas.height / 2 - pc.mass / 2};
+	for (i = 0; i < map.massiveObjects.length; i++) {
+		drawMassiveObject(map.massiveObjects[i]);
 	}
+};
 
-	drawCircle(testMeteor.render.x, testMeteor.render.y, testMeteor.mass / 2, "#FFFFFF");
-	drawCircle(testBoost.render.x, testBoost.render.y, testBoost.mass / 2, "#FF1200");
+var drawMassiveObject = function(obj) {
+	context.drawImage(obj.img, obj.render.x, obj.render.y, obj.mass, obj.mass);
+}
+
+var render = function() {
+	if (numLoadedImages === images.length) {
+		clearAndRedrawBackground();
+		drawMassiveObjects();
+	}
 };
 
 var main = function() {
