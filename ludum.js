@@ -70,7 +70,7 @@ var pc = {
 	maxMass : 100,
 	health : this.maxMass,
 	minMass : 15,
-	img : images[0]
+	img : images[2]
 };
 
 var testMeteor = {
@@ -87,23 +87,23 @@ var testMeteor = {
 }
 
 var testMeteor2 = {
-	name : "larger meteor",
+	name : "huge planet",
 	type: "solid",
 	position : {x: 0, y: 0},
-	speed : {x: 1, y: 1},
+	speed : {x: 0, y: 5},
 	mass : 0,
-	maxMass : 50,
+	maxMass : 120,
 	health : 0,
 	minMass : 10,
 	render : {x :0, y:0},
-	img : images[6]
+	img : images[4]
 }
 
 var testBoost = {
 	name : "boost",
 	type: "boost",
 	position : {x: 0, y: 0},
-	speed : {x: 2, y: -2},
+	speed : {x: 2, y: -5},
 	mass : 0,
 	render : {x :0, y:0},
 	img : images[1]
@@ -126,9 +126,9 @@ var setup = function() {
 	testMeteor.mass = 10;
 	testMeteor.health = testMeteor.mass;
 
-	testMeteor2.position = {x:pc.position.x - 220, y: pc.position.y - canvas.height/2 + 20};
-	testMeteor2.mass = 20;
-	testMeteor.health2 = testMeteor.mass;
+	testMeteor2.position = {x:pc.position.x + 10, y:pc.position.y + 200};
+	testMeteor2.mass = 120;
+	testMeteor2.health = testMeteor2.mass;
 
 	testBoost.position = {x:pc.position.x - 220, y: pc.position.y + canvas.height/2 - 15};
 	testBoost.mass = 21
@@ -256,8 +256,6 @@ var destroyObject = function(obj) {
 			return;
 		}
 	}
-
-
 };
 
 var gravitationalInteraction = function(obj1, obj2) {
@@ -355,6 +353,7 @@ var update = function(modifier) {
 	checkForAndApplyGravityAndCollisions();
 	moveObjects();
 	setAllObjectRenderCoordinates();
+	console.log(pc.speed);
 };
 
 var clearAndRedrawBackground = function() {
